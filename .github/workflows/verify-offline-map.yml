@@ -1,4 +1,4 @@
-name: Verify offline map downloads
+name: Test GaoDe online and XYZ ZIP export
 on:
   push:
     branches: [main]
@@ -30,7 +30,7 @@ jobs:
         run: |
           npm install --prefix /tmp/offline-map-playwright --no-audit --no-fund playwright-core@1.56.1
           command -v google-chrome
-      - name: Run application and verify tile ZIP download
+      - name: Test live GaoDe tile and temporary ZIP plus mock ZIP
         shell: bash
         run: |
           set -euo pipefail
@@ -44,7 +44,22 @@ jobs:
           unzip -t /tmp/offline-map-live-tiles.zip
           test "$(unzip -Z1 /tmp/offline-map-live-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+[.]png$')" -gt 0
           unzip -t /tmp/offline-map-tiles.zip
-          test "$(unzip -Z1 /tmp/offline-map-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+[.]png$')" -gt 0
+          test "$(unzip -Z1 /tmp/offline-map-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+[.]png
+      - name: Save local test ZIP and logs only
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: offline-map-smoke-results
+          path: |
+            /tmp/offline-map-screenshot.png
+            /tmp/offline-map-tiles.zip
+            /tmp/offline-map-vite.log
+          if-no-files-found: warn
+)" -gt 0
+          echo "### GaoDe online smoke test" >> "$GITHUB_STEP_SUMMARY"
+          echo "GaoDe returned HTTP 200; live XYZ ZIP was generated and validated in temporary storage." >> "$GITHUB_STEP_SUMMARY"
+          echo "Only local mock tile ZIP and application logs are exported as artifacts; GaoDe images are not published." >> "$GITHUB_STEP_SUMMARY"
+          rm -f /tmp/offline-map-live-tiles.zip /tmp/offline-map-live-screenshot.png
       - name: Save screenshot and test ZIP
         uses: actions/upload-artifact@v4
         if: always()
