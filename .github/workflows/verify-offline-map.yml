@@ -41,6 +41,23 @@ jobs:
           done
           curl -fsSI http://127.0.0.1:5173/
           node tests/smoke-download.cjs
+          unzip -t /tmp/offline-map-live-tiles.zip
+          test "$(unzip -Z1 /tmp/offline-map-live-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+\\.png
+          unzip -Z1 /tmp/offline-map-tiles.zip | grep -E '^tiles/[0-9]+/[0-9]+/[0-9]+\.png$' | head -n 10
+          test "$(unzip -Z1 /tmp/offline-map-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+\.png$')" -gt 0
+      - name: Save screenshot and test ZIP
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: offline-map-smoke-results
+          path: |
+            /tmp/offline-map-live-screenshot.png
+            /tmp/offline-map-live-tiles.zip
+            /tmp/offline-map-screenshot.png
+            /tmp/offline-map-tiles.zip
+            /tmp/offline-map-vite.log
+          if-no-files-found: warn
+)" -gt 0
           unzip -t /tmp/offline-map-tiles.zip
           unzip -Z1 /tmp/offline-map-tiles.zip | grep -E '^tiles/[0-9]+/[0-9]+/[0-9]+\.png$' | head -n 10
           test "$(unzip -Z1 /tmp/offline-map-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+\.png$')" -gt 0
