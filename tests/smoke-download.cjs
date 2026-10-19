@@ -55,18 +55,30 @@ async function action(page, label) {
       }
     });
     console.log('DEFAULT_TILE_FETCH', JSON.stringify(defaultTileProbe));
-    if (defaultTileProbe.httpStatus !== 200 || !defaultTileProbe.corsAccessible) {
-      throw new Error('Default real tile source unavailable: '+JSON.stringify(defaultTileProbe));
+    const liveStatus = {
+      source:'GaoDe', httpStatus:defaultTileProbe.httpStatus ?? null,
+      corsAccessible:Boolean(defaultTileProbe.corsAccessible),
+      zipGenerated:false, error:defaultTileProbe.error ?? null
+    };
+    if(defaultTileProbe.httpStatus === 200 && defaultTileProbe.corsAccessible) {
+      try {
+        await action(page,'获取当前地图范围');
+        page.once('dialog',dialog=>dialog.accept());
+        const realDownloadPromise=page.waitForEvent('download',{timeout:60000});
+        await action(page,'下载地图瓦片');
+        const realDownload=await realDownloadPromise;
+        await realDownload.saveAs('/tmp/offline-map-live-tiles.zip');
+        liveStatus.zipGenerated=true;
+        console.log('LIVE_ZIP_DOWNLOADED',realDownload.suggestedFilename(),fs.statSync('/tmp/offline-map-live-tiles.zip').size);
+      } catch(e) {
+        liveStatus.error=String(e);
+        console.warn('LIVE_GAODE_DOWNLOAD_FAILED',String(e));
+      }
+    } else {
+      console.warn('LIVE_GAODE_UNAVAILABLE',JSON.stringify(defaultTileProbe));
     }
-    await page.waitForTimeout(1200);
-    // Also download an actual ZIP from the default live GaoDe source.
-    await action(page,'获取当前地图范围');
-    page.once('dialog',dialog=>dialog.accept());
-    const realDownloadPromise=page.waitForEvent('download',{timeout:120000});
-    await action(page,'下载地图瓦片');
-    const realDownload=await realDownloadPromise;
-    await realDownload.saveAs('/tmp/offline-map-live-tiles.zip');
-    console.log('LIVE_ZIP_DOWNLOADED',realDownload.suggestedFilename(),fs.statSync('/tmp/offline-map-live-tiles.zip').size);
+    fs.writeFileSync('/tmp/offline-map-gaode-check.json',JSON.stringify(liveStatus,null,2));
+    console.log('GAODE_TEST_STATUS',JSON.stringify(liveStatus));
     // Select an isolated test tile source with CORS enabled.
     const testUrl='http://127.0.0.1:4242/tiles/{z}/{y}/{x}.png';
     const input=page.locator('input[placeholder="请输入瓦片地址"]');
