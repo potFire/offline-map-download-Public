@@ -1,0 +1,101 @@
+name: Download authorized tiles into repository
+
+on:
+  workflow_dispatch:
+    inputs:
+      bbox:
+        description: "minLon,minLat,maxLon,maxLat (WGS84)"
+        type: string
+        default: "113.93,22.58,114.25,22.77"
+        required: true
+      min_zoom:
+        description: "First XYZ zoom level (NASA supports up to z=8)"
+        type: number
+        default: 6
+        required: true
+      max_zoom:
+        description: "Last XYZ zoom level"
+        type: number
+        default: 8
+        required: true
+      tile_url:
+        description: "HTTPS XYZ template; only sources licensed for offline redistribution"
+        type: string
+        default: "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg"
+        required: true
+      extension:
+        description: "Tile image format"
+        type: choice
+        options: [jpeg, jpg, png, webp]
+        default: jpeg
+        required: true
+      dataset:
+        description: "Directory name beneath tiles/"
+        type: string
+        default: "nasa-blue-marble"
+        required: true
+      max_tiles:
+        description: "Safety cap: no more than 500 per run"
+        type: number
+        default: 200
+        required: true
+
+  # Initial workflow commit runs a small sample; tile commits do not retrigger.
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/download-tiles-to-repo.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: authorized-tile-export
+  cancel-in-progress: false
+
+jobs:
+  tiles-to-github:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download and validate real XYZ tiles
+        env:
+          TILE_BBOX: ${{ inputs.bbox || '113.93,22.58,114.25,22.77' }}
+          TILE_MIN_ZOOM: ${{ inputs.min_zoom || '6' }}
+          TILE_MAX_ZOOM: ${{ inputs.max_zoom || '8' }}
+          TILE_URL: ${{ inputs.tile_url || 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg' }}
+          TILE_EXTENSION: ${{ inputs.extension || 'jpeg' }}
+          TILE_DATASET: ${{ inputs.dataset || 'nasa-blue-marble' }}
+          TILE_MAX_COUNT: ${{ inputs.max_tiles || '200' }}
+        run: |
+          python -m py_compile scripts/download_tiles.py
+          python scripts/download_tiles.py \
+            --bbox "$TILE_BBOX" \
+            --min-zoom "$TILE_MIN_ZOOM" \
+            --max-zoom "$TILE_MAX_ZOOM" \
+            --tile-url "$TILE_URL" \
+            --extension "$TILE_EXTENSION" \
+            --dataset "$TILE_DATASET" \
+            --max-tiles "$TILE_MAX_COUNT"
+
+      - name: Commit generated tile files to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- tiles/
+          if git diff --cached --quiet; then
+            echo "All tiles are already committed."
+          else
+            git commit -m "Store licensed offline XYZ map tiles"
+            git push origin HEAD:main
+          fi
