@@ -69,3 +69,7 @@
 - 天地图-https://www.tianditu.gov.cn/
 - 高德地图-https://lbs.amap.com/api/javascript-api-v2/summary
 - sharp-`https://github.com/lovell/sharp`
+
+## GitHub Actions 下载瓦片到仓库
+
+支持在 GitHub Actions 中指定范围、缩放层级以及**已获离线存储与公开分发授权**的 XYZ 地图源，将下载的瓦片提交到 `tiles/<dataset>/<z>/<y>/<x>.<ext>`。默认通过 NASA 开放卫星影像进行小范围验证，详见 [使用说明](docs/download-tiles-to-github.md)。
