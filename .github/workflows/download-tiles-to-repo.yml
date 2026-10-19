@@ -45,6 +45,8 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/download-tiles-to-repo.yml"
+      - ".gitignore"
+      - "scripts/download_tiles.py"
 
 permissions:
   contents: write
