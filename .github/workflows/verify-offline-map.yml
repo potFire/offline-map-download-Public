@@ -1,0 +1,54 @@
+name: Verify offline map downloads
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-offline-map.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck and build application
+        run: pnpm run build
+      - name: Prepare browser test
+        run: |
+          npm install --prefix /tmp/offline-map-playwright --no-audit --no-fund playwright-core@1.56.1
+          command -v google-chrome
+      - name: Run application and verify tile ZIP download
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm dev --host 127.0.0.1 > /tmp/offline-map-vite.log 2>&1 &
+          for i in {1..40}; do
+            if curl -fsS http://127.0.0.1:5173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsSI http://127.0.0.1:5173/
+          node tests/smoke-download.cjs
+          unzip -t /tmp/offline-map-tiles.zip
+          unzip -Z1 /tmp/offline-map-tiles.zip | grep -E '^tiles/[0-9]+/[0-9]+/[0-9]+\.png$' | head -n 10
+          test "$(unzip -Z1 /tmp/offline-map-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+\.png$')" -gt 0
+      - name: Save screenshot and test ZIP
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: offline-map-smoke-results
+          path: |
+            /tmp/offline-map-screenshot.png
+            /tmp/offline-map-tiles.zip
+            /tmp/offline-map-vite.log
+          if-no-files-found: warn
