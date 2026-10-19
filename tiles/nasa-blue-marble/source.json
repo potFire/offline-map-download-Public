@@ -1,0 +1,17 @@
+{
+  "dataset": "nasa-blue-marble",
+  "source": "NASA GIBS Blue Marble (August 2004)",
+  "attribution": "Imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS).",
+  "bounds_lonlat": [
+    113.93,
+    22.58,
+    114.25,
+    22.77
+  ],
+  "min_zoom": 6,
+  "max_zoom": 8,
+  "tile_format": "jpeg",
+  "tile_count": 3,
+  "coordinate_system": "EPSG:3857",
+  "tile_scheme": "XYZ z/y/x"
+}
