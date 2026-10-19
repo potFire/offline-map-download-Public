@@ -59,7 +59,6 @@ async function action(page, label) {
       throw new Error('Default real tile source unavailable: '+JSON.stringify(defaultTileProbe));
     }
     await page.waitForTimeout(1200);
-    await page.screenshot({path:'/tmp/offline-map-live-screenshot.png',fullPage:true});
     // Also download an actual ZIP from the default live GaoDe source.
     await action(page,'获取当前地图范围');
     page.once('dialog',dialog=>dialog.accept());
