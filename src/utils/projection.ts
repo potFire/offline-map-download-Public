@@ -41,7 +41,7 @@ export type ProjConfigType = {
   resolutions?: number[];
 };
 const EARTH_R = 6378137;
-export const getProjection = (projConfig: ProjConfigType, tileSize = 256) => {
+export const getProjection = (projConfig: ProjConfigType, _tileSize = 256) => {
   const {name, config, origin, resolutions} = projConfig;
   //定义投影
   proj4.defs(name, config);
