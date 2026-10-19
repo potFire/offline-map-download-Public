@@ -44,30 +44,17 @@ jobs:
           unzip -t /tmp/offline-map-live-tiles.zip
           test "$(unzip -Z1 /tmp/offline-map-live-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+[.]png$')" -gt 0
           unzip -t /tmp/offline-map-tiles.zip
-          test "$(unzip -Z1 /tmp/offline-map-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+[.]png
-      - name: Save local test ZIP and logs only
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: offline-map-smoke-results
-          path: |
-            /tmp/offline-map-screenshot.png
-            /tmp/offline-map-tiles.zip
-            /tmp/offline-map-vite.log
-          if-no-files-found: warn
-)" -gt 0
+          test "$(unzip -Z1 /tmp/offline-map-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+[.]png$')" -gt 0
           echo "### GaoDe online smoke test" >> "$GITHUB_STEP_SUMMARY"
-          echo "GaoDe returned HTTP 200; live XYZ ZIP was generated and validated in temporary storage." >> "$GITHUB_STEP_SUMMARY"
-          echo "Only local mock tile ZIP and application logs are exported as artifacts; GaoDe images are not published." >> "$GITHUB_STEP_SUMMARY"
+          echo "GaoDe returned HTTP 200; a live XYZ ZIP was generated and verified in temporary storage." >> "$GITHUB_STEP_SUMMARY"
+          echo "Only local mock tile data is saved as an artifact; GaoDe tiles are not committed or uploaded." >> "$GITHUB_STEP_SUMMARY"
           rm -f /tmp/offline-map-live-tiles.zip /tmp/offline-map-live-screenshot.png
-      - name: Save screenshot and test ZIP
+      - name: Save local test ZIP and logs
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: offline-map-smoke-results
           path: |
-            /tmp/offline-map-live-screenshot.png
-            /tmp/offline-map-live-tiles.zip
             /tmp/offline-map-screenshot.png
             /tmp/offline-map-tiles.zip
             /tmp/offline-map-vite.log
