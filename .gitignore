@@ -11,7 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
-tiles
+# Generated map tiles in tiles/ are intentionally tracked by GitHub Actions.
 
 # Editor directories and files
 .vscode/*
