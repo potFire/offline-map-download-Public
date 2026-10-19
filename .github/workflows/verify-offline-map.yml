@@ -41,20 +41,32 @@ jobs:
           done
           curl -fsSI http://127.0.0.1:5173/
           node tests/smoke-download.cjs
-          unzip -t /tmp/offline-map-live-tiles.zip
-          test "$(unzip -Z1 /tmp/offline-map-live-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+[.]png$')" -gt 0
+          if [ -f /tmp/offline-map-live-tiles.zip ]; then
+            unzip -t /tmp/offline-map-live-tiles.zip
+            test "$(unzip -Z1 /tmp/offline-map-live-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+[.]png$')" -gt 0
+          fi
           unzip -t /tmp/offline-map-tiles.zip
           test "$(unzip -Z1 /tmp/offline-map-tiles.zip | grep -Ec '^tiles/[0-9]+/[0-9]+/[0-9]+[.]png$')" -gt 0
-          echo "### GaoDe online smoke test" >> "$GITHUB_STEP_SUMMARY"
-          echo "GaoDe returned HTTP 200; a live XYZ ZIP was generated and verified in temporary storage." >> "$GITHUB_STEP_SUMMARY"
-          echo "Only local mock tile data is saved as an artifact; GaoDe tiles are not committed or uploaded." >> "$GITHUB_STEP_SUMMARY"
-          rm -f /tmp/offline-map-live-tiles.zip /tmp/offline-map-live-screenshot.png
-      - name: Save local test ZIP and logs
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          report = json.load(open("/tmp/offline-map-gaode-check.json"))
+          print("### GaoDe online test")
+          if report["zipGenerated"]:
+              print("Live GaoDe tile source HTTP 200; temporary XYZ ZIP downloaded and validated.")
+          else:
+              print("GaoDe live source could not be verified on this runner. This does not mean the local ZIP logic failed.")
+              print("Reason: " + str(report.get("error") or "non-200 HTTP status/CORS issue"))
+          print("Mock XYZ tile ZIP: generated and validated.")
+          print("No GaoDe imagery committed to public GitHub or uploaded as an artifact.")
+          PY
+          rm -f /tmp/offline-map-live-tiles.zip
+      - name: Save local test ZIP and network diagnostics
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: offline-map-smoke-results
           path: |
+            /tmp/offline-map-gaode-check.json
             /tmp/offline-map-screenshot.png
             /tmp/offline-map-tiles.zip
             /tmp/offline-map-vite.log
