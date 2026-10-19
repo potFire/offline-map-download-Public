@@ -1,0 +1,27 @@
+name: Import upstream offline-map-download
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/import-upstream.yml'
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Copy complete upstream source into this repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --quiet --depth 1 --branch master https://github.com/xiaolidan00/offline-map-download.git /tmp/upstream-map
+          rsync -a --delete --exclude='.git/' /tmp/upstream-map/ ./
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Import full upstream offline-map-download project'
+          git push origin HEAD:main
