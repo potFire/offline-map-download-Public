@@ -55,6 +55,19 @@ async function action(page, label) {
       }
     });
     console.log('DEFAULT_TILE_FETCH', JSON.stringify(defaultTileProbe));
+    if (defaultTileProbe.httpStatus !== 200 || !defaultTileProbe.corsAccessible) {
+      throw new Error('Default real tile source unavailable: '+JSON.stringify(defaultTileProbe));
+    }
+    await page.waitForTimeout(1200);
+    await page.screenshot({path:'/tmp/offline-map-live-screenshot.png',fullPage:true});
+    // Also download an actual ZIP from the default live GaoDe source.
+    await action(page,'获取当前地图范围');
+    page.once('dialog',dialog=>dialog.accept());
+    const realDownloadPromise=page.waitForEvent('download',{timeout:120000});
+    await action(page,'下载地图瓦片');
+    const realDownload=await realDownloadPromise;
+    await realDownload.saveAs('/tmp/offline-map-live-tiles.zip');
+    console.log('LIVE_ZIP_DOWNLOADED',realDownload.suggestedFilename(),fs.statSync('/tmp/offline-map-live-tiles.zip').size);
     // Select an isolated test tile source with CORS enabled.
     const testUrl='http://127.0.0.1:4242/tiles/{z}/{y}/{x}.png';
     const input=page.locator('input[placeholder="请输入瓦片地址"]');
