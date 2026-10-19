@@ -1,0 +1,103 @@
+body,
+#app {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0px;
+  left: 0px;
+  margin: 0px;
+  padding: 0px;
+  overflow: hidden;
+}
+:root {
+  --el-text-color-regular: black !important;
+}
+* {
+  box-sizing: border-box;
+}
+.map-container {
+  height: 100%;
+  width: 100%;
+}
+.el-form-item {
+  margin-bottom: 10px !important;
+}
+
+.loading {
+  position: fixed;
+  left: 0px;
+  top: 0px;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(255, 255, 255, 0.5);
+  color: blue;
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.config-panel {
+  height: 100%;
+  width: 300px;
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  z-index: 9;
+  background-color: rgba(255, 255, 255, 0.5);
+  padding: 10px;
+  font-size: 14px;
+  line-height: 2;
+  border-radius: 4px;
+  box-shadow: 0 0 8px #ccc;
+  backdrop-filter: blur(10px);
+}
+.geojson-item {
+  background-color: rgba(255, 255, 255, 0.3);
+  > div:first-child {
+    height: 40px;
+    line-height: 20px;
+    padding: 0 10px;
+    border-radius: 4px;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    gap: 5px;
+    > span {
+      display: inline-block;
+      width: calc(100% - 25px);
+    }
+    i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-style: normal;
+      height: 16px;
+      line-height: 16px;
+      width: 16px;
+    }
+    > i:first-child {
+      cursor: pointer;
+      font-size: 16px;
+
+      &.active {
+        transform: rotate(90deg);
+      }
+    }
+    > i :last-child {
+      border-radius: 50%;
+      cursor: pointer;
+      background-color: gray;
+      color: white;
+      font-size: 12px;
+
+      vertical-align: middle;
+      font-style: normal;
+    }
+  }
+  > div:last-child {
+    padding: 10px;
+  }
+}
